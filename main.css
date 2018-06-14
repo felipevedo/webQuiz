@@ -1,0 +1,32 @@
+:root{
+  --main-color: #C8DC8A;
+  --light-main-color: #E3F3B4;
+  --dark-main-color: #ACC463;
+  --darkest-main-color: #8FA93C;
+
+  --a-color: #D98997;
+  --light-a-color: #EFB2BD;
+  --dark-a-color: #C16172;
+  --darkest-a-color: #A73B4E;
+
+  --b-color: #82669C;
+  --light-b-color: #9983AC;
+  --dark-b-color: #6C4B8B;
+  --darkest-b-color: #563078;
+}
+body{
+  background-color: var(--main-color);
+}
+.editor-field{
+  box-sizing: border-box;
+  padding: 1em;
+  margin: 2em 0;
+  background-color: var(--dark-main-color);
+}
+.edit-answers{
+  display: flex;
+  flex-direction: column;
+}
+.answer-row{
+  margin: 0.5em 0;
+}

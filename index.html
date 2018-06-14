@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>Evaluador</title>
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+    <h2 id="question-count"></h2>
+    <form id="form" action="" method="get">
+      <fieldset class="editor-field">
+        <label for="question-caption">Enunciado:</label>
+        <input id="question-caption" type="text" placeholder="Aquí el texto de la pregunta" size="50">
+      </fieldset>
+      <fieldset class="editor-field">
+        <label for="question-type">Tipo de pregunta:</label>
+        <select id="question-type" onchange="mainAppObj.nextQuestion" name="question-type" >
+          <option value="empty">Seleccione...</option>
+          <option value="multiple">Opción Multiple</option>
+          <option value="complete">Completar</option>
+          <option value="fov">Falso o verdadero</option>
+        </select>
+      </fieldset>
+      <fieldset id="edit-options" class="editor-field edit-answers"></fieldset>
+      <fieldset class="editor-controls editor-field">
+        <button id="finished-test" type="button">Listo</button>
+        <button id="next-question" type="button">Siguiente >></button>
+      </fieldset>
+    </form>
+    <script type="text/javascript" src="code.js"></script>
+  </body>
+</html>
