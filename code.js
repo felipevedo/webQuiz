@@ -107,9 +107,6 @@ let mainAppObj = {
   genMultiple: function() {
 
     this.editOptions.innerHTML = "";
-    this.genOpts.legend = document.createElement("legend");
-    this.genOpts.legend.innerHTML = "Check the right answer";
-    this.editOptions.appendChild(this.genOpts.legend);
     //para los radios
     for (let i = 1; i <= mainAppObj.answerOptNum; i++) {
       //debo primero saber como detectar la correcta
