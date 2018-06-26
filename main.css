@@ -14,7 +14,7 @@
   --dark-b-color: #6C4B8B;
   --darkest-b-color: #563078;
 }
-body{
+body {
   background-color: var(--main-color);
 }
 .editor-field{
@@ -29,4 +29,7 @@ body{
 }
 .answer-row{
   margin: 0.5em 0;
+}
+.required{
+  border: 3px solid red;
 }
