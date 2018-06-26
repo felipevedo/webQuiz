@@ -19,28 +19,6 @@ class Test {
     this.questionCount = 0;
     this.currentQuestion = 1;
     this.questions = {};
-    this.nextQuestion = function(){
-      //##################### Esta funcion debe: ###################################
-      // - Guardar todos los datos relevantes de la pregunta que se acaba de crear
-      // -Validar o crear otro metodo para validar todos los valores antes de guardar
-      // -Llamar a otra que guarde, para que esa pueda ser llamada por listo tambien
-      //- Esa otra debe actuar segun el tipo de pregunta y asi guardar, por ahora
-      // solo estamos guardando las de tipo multiple
-      //############################################################################
-      //opcional mientras las convierto en promesas
-      if (form.fetchQuestion()) {
-        //update important values
-        actualTest.currentQuestion++;
-        webQuiz.showCD();
-        form.editOptions.innerHTML = "";
-        form.qCaption.value = "";
-        form.qType.value = "empty";
-        form.genOpts = {};
-      }
-      else {
-        alert("can't go on to the next question");
-      }
-    };
   }
 }
 class Question {
@@ -52,7 +30,7 @@ class Question {
   }
   static optionEditModel(type) {
     //console.log("tipo de pregunta: ", type);
-    let multipleModel = {
+    let multiple = {
       row: {
         tag: "div",
         class: St["answer-row"],
@@ -76,7 +54,45 @@ class Question {
     }
 
     if (type == "multiple") {
-      return multipleModel;
+      return multiple;
+    }
+  }
+  static answerModel(type, query) {
+    let multiple = {
+      model: {
+        fieldset: {
+          tag: "fieldset",
+          heading: {
+            tag: "h2",
+            legend: {
+              tag: "legend"
+            }
+          },
+          list: {
+            tag: "ul",
+          }
+        }
+      },
+      option: {
+        item: {
+              tag: "li",
+              input: {
+                tag: "input",
+                type: "radio",
+                required: ""
+              },
+              label: {
+                tag: "label"
+              }
+            }
+      }
+    }
+    //console.log("tipo de rta: ", type);
+
+    if (type == "multiple" && query == undefined) {
+      return multiple.model; 
+    } else if (type == "multiple" && query == "option") {
+      return multiple.option;
     }
   }
 }
@@ -137,6 +153,42 @@ var webQuiz = {
   showCD: function() {
     form.countDisplay.innerHTML = `Pregunta ${actualTest.currentQuestion}/${actualTest.questionCount}`;
   },
+  setAnswers: function(){
+    let body = document.body;
+    body.innerHTML = "<h1>Examen creado</h1>";
+
+    for (let ques in actualTest.questions) {
+      if (actualTest.questions[ques].type == "multiple"){
+        //por el momento tiene el error de que en full model solo termina
+        //guardada la ultima pregunta, porque no se esta enumerando
+        //sino que todas se asignan a la propiedad list
+        let model = Question.answerModel(actualTest.questions[ques].type);
+        let fullModel = webQuiz.htFiller(model);
+        fullModel.fieldset.heading.legend.element.innerHTML = `${ques} - ¿ ${actualTest.questions[ques].caption} ?`;
+        for (let option in actualTest.questions[ques].options) {
+          let qModel = Question.answerModel(actualTest.questions[ques].type, "option");
+          let fullQ = webQuiz.htFiller(qModel);
+          fullModel.fieldset.list[option] = {};
+
+          fullQ.item.input.element.setAttribute("id",`${ques}-${option}`);
+          fullQ.item.input.element.setAttribute("name",`rta${ques}`);
+          fullQ.item.label.element.setAttribute("for",`${ques}-${option}`);
+          fullQ.item.label.element.innerHTML = `${option}) ${actualTest.questions[ques].options[option]}`;
+
+          fullModel.fieldset.list[option] = fullQ.item;
+        }
+        webQuiz.htPrinter(fullModel, body);
+      } else if (actualTest.questions[ques].type == "complete") {
+        //codigo para completación
+      }
+      else if (actualTest.questions[ques].type == "fov") {
+        //codigo para falso o verdadero
+      }
+      else {
+        //codigo por si nada sirve
+      }
+    } 
+  }
 }
 var form = {
     optNumber: document.getElementById("option-number"),
@@ -185,7 +237,7 @@ var form = {
           //console.log("Aceptado: ", returnObj);
           fulfill(returnObj);
         } else if (accumulator.every((bool)=> bool == false)){
-          ///console.log("Aceptado con exception: ", returnObj);
+          //console.log("Aceptado con exception: ", returnObj);
           returnObj.exception = true;
           fulfill(returnObj);
         }else {
@@ -207,13 +259,15 @@ var form = {
       form.fetchQuestion().then(function(message){
         //update important values
         //llamada a funcion para remover bordes rojos 
+        if (message.exception == false) {
         cleanClass(form.structure, St.required);
         actualTest.currentQuestion++;
         webQuiz.showCD();
         form.editOptions.innerHTML = "";
         form.qCaption.value = "";
-        form.qType.value = "empty";
+        form.qType.value = "";
         form.genOpts = {};
+        }
       }, function(message){
           //console.log("fetchQuestion rechazada: ", message);
           alert("can't go  to next question: " + message.text);
@@ -237,21 +291,8 @@ var form = {
       //llamada a la funcion guardar
       form.fetchQuestion().then(function(message){
         if (actualTest.questionCount > 0) {
-        let d = document.body;
-        let ht = "";
-        d.innerHTML = "";
-        ht = "<h1>Examen creado</h1>";
-        for (let ques in actualTest.questions) {
-          ht += `<fieldset><h2><legend>${ques} - ¿ ${actualTest.questions[ques].caption} ?</legend></h2>`
-          ht += `<ul>`;
-          for (let option in actualTest.questions[ques].options) {
-            // ht += '<li><input type="radio" id="' + option +'" name="rta' + ques +
-            ht += `<li><input type="radio" id="${ques}-${option}" name="rta${ques}"/><label for="${ques}-${option}">${option})${actualTest.questions[ques].options[option]}</label></li>`;
-          }
-          ht += `</fieldset></ul>`;
-          d.innerHTML = ht;
-        }
-        console.log("test finiquitado ",actualTest);
+          webQuiz.setAnswers();
+          console.log("test finiquitado ",actualTest);
         } else {
           alert("You haven't created any questions");
         }
@@ -340,7 +381,7 @@ var form = {
         }
       }
       return any;
-  }
+    }
 }
 
 let actualTest = new Test;
