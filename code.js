@@ -14,6 +14,69 @@
 //se pasarian los metodos de evaluacion de requerimientos a este
 //1-el objeto deberia dar cuenta de su estructura html como genOpts
 //que lo hace por cada pregunta. Y actualizarse cada que se crea o elimina algo en el
+var evalSession = {
+  //donde se guardaran las respuestas a un examen.
+  //debería haber una forma de relacionar la estructura
+  //con un test en particular
+  structureModel: {
+    head:{
+      tag: "header",
+      title: 
+        {
+          tag: "h1",
+        }
+    },
+    qCont:{
+      tag: "section",
+      class: St.qContainer
+    },
+    btnCont:{
+      tag: "section",
+      send: {
+        tag: "button",
+        id: "sendBtn",
+      }
+    }
+  },
+  htStructure: {},
+  testAnswers: {
+    testName: "",
+    answers: {}
+  },
+  evaluate: function() {
+      evalSession.fetchAnswers().then((message)=>{
+        for(let ques in actualTest.questions){
+          actualTest.questions[ques].assess(evalSession,ques);
+        }
+      },
+      (message)=> console.log("evaluate says: ", message));  
+  },
+  fetchAnswers: function(){
+    return new Promise(function(fulfill,reject){
+      form.validateReq(evalSession.htStructure.qCont.element).then(function(message){
+        console.log("fetchVal fulfilled: ", message);
+        //fetching code
+        for(let ques in actualTest.questions){
+
+          for(let opt in evalSession.htStructure.qCont[ques].list){
+
+            if (opt !== "element" && evalSession.htStructure.qCont[ques].list[opt].input.element.checked) {
+              evalSession.testAnswers.answers[ques] = {};
+              evalSession.testAnswers.answers[ques].chosen = opt;
+            }
+            
+          }
+        }
+        console.log("fetched: ", evalSession.testAnswers);
+        //end of fetching code
+        fulfill(message);
+      },function(message){
+        console.log("fetchVal rejected: ", message);
+        reject(message);
+      });
+    });
+  }
+}
 class Test {
   constructor() {
     this.questionCount = 0;
@@ -27,6 +90,22 @@ class Question {
     this.correct = 0;
     this.caption = "";
     this.type = "";
+    this.assess = function(session, question){
+      let answers = session.testAnswers.answers;
+      console.log("assessing question: ", question);
+      if (this.type == "multiple") 
+      {
+        for (let ans in answers) {
+          if (answers[ans].chosen == this.correct) 
+          {
+            return console.log("yeah right!");
+          }
+          else {
+            return console.log("WRONG");
+          }        
+        }
+      }
+    }
   }
   static optionEditModel(type) {
     //console.log("tipo de pregunta: ", type);
@@ -153,41 +232,65 @@ var webQuiz = {
   showCD: function() {
     form.countDisplay.innerHTML = `Pregunta ${actualTest.currentQuestion}/${actualTest.questionCount}`;
   },
+  // este metodo deberia recibir el Test
   setAnswers: function(){
     let body = document.body;
-    body.innerHTML = "<h1>Examen creado</h1>";
+    body.innerHTML = "";
+    //Set stuff for the main screen
+    let evalScreen = webQuiz.htFiller(evalSession.structureModel);
+    evalScreen.head.title.element.innerHTML = "<h1>Examen creado</h1>";
+    evalScreen.btnCont.send.element.innerHTML = "Enviar";
+
 
     for (let ques in actualTest.questions) {
       if (actualTest.questions[ques].type == "multiple"){
-        //por el momento tiene el error de que en full model solo termina
-        //guardada la ultima pregunta, porque no se esta enumerando
-        //sino que todas se asignan a la propiedad list
+        //creating the question object
+        evalScreen.qCont[ques] = {};
+        //ask for and set this question model
         let model = Question.answerModel(actualTest.questions[ques].type);
         let fullModel = webQuiz.htFiller(model);
         fullModel.fieldset.heading.legend.element.innerHTML = `${ques} - ¿ ${actualTest.questions[ques].caption} ?`;
+
+        //ask and set each option and update fullModel object after the setting
         for (let option in actualTest.questions[ques].options) {
           let qModel = Question.answerModel(actualTest.questions[ques].type, "option");
           let fullQ = webQuiz.htFiller(qModel);
           fullModel.fieldset.list[option] = {};
 
+          //Setting stuff
           fullQ.item.input.element.setAttribute("id",`${ques}-${option}`);
           fullQ.item.input.element.setAttribute("name",`rta${ques}`);
           fullQ.item.label.element.setAttribute("for",`${ques}-${option}`);
           fullQ.item.label.element.innerHTML = `${option}) ${actualTest.questions[ques].options[option]}`;
 
+          //updating
           fullModel.fieldset.list[option] = fullQ.item;
         }
-        webQuiz.htPrinter(fullModel, body);
+
+        //updating main Father 
+        evalScreen.qCont[ques] = fullModel.fieldset;
       } else if (actualTest.questions[ques].type == "complete") {
         //codigo para completación
+        evalScreen.qCont[ques] = {};
       }
       else if (actualTest.questions[ques].type == "fov") {
         //codigo para falso o verdadero
+        evalScreen.qCont[ques] = {};
       }
       else {
         //codigo por si nada sirve
       }
-    } 
+    }
+
+    //update and print the whole new screen
+    evalSession.htStructure = evalScreen;
+        console.log("printed: ", evalSession.htStructure);
+    webQuiz.htPrinter(evalScreen, body);
+    webQuiz.binder(evalScreen.btnCont.send.element, "click",evalSession.evaluate);
+  },
+  binder: function(element, ev, func){
+    //takes an html element, the event as string and a function to bind to it
+    element.addEventListener(ev, func);
   }
 }
 var form = {
@@ -198,6 +301,7 @@ var form = {
     nextBtn: document.getElementById("next-question"),
     countDisplay: document.getElementById('question-count'),
     finBtn: document.getElementById("finished-test"),
+    structure:document.getElementById("form"),
     validateReq: function(myForm) {
       return new Promise(function(fulfill, reject) {
         //falta agregar la condicion de que se haya creado al menos una pregunta
@@ -211,7 +315,7 @@ var form = {
         let radioGroup = {};
         //console.log("required elements: ", elements);
         for (let i = 0; i < elements.length; i++) {
-            if(elements[i].type == "radio") {
+            if(elements[i].type == "radio" /*agregar verificacion de name y agruparlos asi*/) {
                 radioGroup[i] = elements[i];
             }
             if (elements[i].value == "") {
@@ -246,7 +350,6 @@ var form = {
         }
       });
     },
-    structure:document.getElementById("form"),
     nextQuestion: function(){
       //##################### Esta funcion debe: ###################################
       // - Guardar todos los datos relevantes de la pregunta que se acaba de crear
@@ -291,8 +394,8 @@ var form = {
       //llamada a la funcion guardar
       form.fetchQuestion().then(function(message){
         if (actualTest.questionCount > 0) {
-          webQuiz.setAnswers();
           console.log("test finiquitado ",actualTest);
+          webQuiz.setAnswers();
         } else {
           alert("You haven't created any questions");
         }
@@ -305,28 +408,29 @@ var form = {
       });  
     },
     fetchQuestion: function() {
+      //only works for one type of question
       return new Promise(function(fulfill, reject){
           form.validateReq(form.structure).then(function(message){
             if (message.exception == false) {
               actualTest.questions[actualTest.currentQuestion] = new Question;
-            //update question type
-            actualTest.questions[actualTest.currentQuestion].type = form.qType.value;
-            //update question enunciate
-            actualTest.questions[actualTest.currentQuestion].caption = form.qCaption.value;
-            //iterate to update some properties
-            for (let opt in form.genOpts) {
-              //update options
-              actualTest.questions[actualTest.currentQuestion].options[opt] = form.genOpts[opt].row.text.element.value;
-              //check correct answer
-              if (form.genOpts[opt].row.radio.element.checked) {
-                //update correct answer
-                actualTest.questions[actualTest.currentQuestion].correct = form.genOpts[opt].row.radio.element.value;
+              //update question type
+              actualTest.questions[actualTest.currentQuestion].type = form.qType.value;
+              //update question enunciate
+              actualTest.questions[actualTest.currentQuestion].caption = form.qCaption.value;
+              //iterate to update some properties
+              for (let opt in form.genOpts) {
+                //update options
+                actualTest.questions[actualTest.currentQuestion].options[opt] = form.genOpts[opt].row.text.element.value;
+                //check correct answer
+                if (form.genOpts[opt].row.radio.element.checked) {
+                  //update correct answer
+                  actualTest.questions[actualTest.currentQuestion].correct = form.genOpts[opt].row.radio.element.value;
+                }
               }
-            }
-            //agregar esto al objeto mensaje
-            console.log("Question saved! ", actualTest.questions[actualTest.currentQuestion]);
-            actualTest.questionCount++;
-            fulfill(message);
+              //agregar esto al objeto mensaje
+              console.log("Question saved! ", actualTest.questions[actualTest.currentQuestion]);
+              actualTest.questionCount++;
+              fulfill(message);
             } else {
               message.text = "No info to fetch";
               fulfill(message);
@@ -359,7 +463,7 @@ var form = {
           webQuiz.htPrinter(genObj[i], form.editOptions);
         }
         form.genOpts = genObj;
-        console.log("form.genOpts: ", form.genOpts);
+       // console.log("form.genOpts: ", form.genOpts);
       }
       else if (kind == "complete") {
           //codigo para completación
@@ -374,6 +478,7 @@ var form = {
       }
     },
     anyRadio: function(elementsObj) {
+      /*crear iteracion por names y que  busque en any pero en cada uno de ellos*/
       let any = false;
       for (let optElements in elementsObj) {
         if (elementsObj[optElements].checked) {

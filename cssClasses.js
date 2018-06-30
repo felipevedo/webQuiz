@@ -3,7 +3,8 @@ var St = {
 		"editor-field": "editor-field",
 		"edit-answers": "edit-answers",
 		"answer-row" :"answer-row",
-		required: "required"
+		required: "required",
+        qContainer: "question-container"
 	};
 
 function generateDocument() {
