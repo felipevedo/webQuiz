@@ -49,12 +49,13 @@ var evalSession = {
           actualTest.questions[ques].assess(evalSession,ques);
         }
       },
-      (message)=> console.log("evaluate says: ", message));  
+      (message)=> console.log("evaluate says: ", message.text));  
   },
   fetchAnswers: function(){
     return new Promise(function(fulfill,reject){
       form.validateReq(evalSession.htStructure.qCont.element).then(function(message){
         console.log("fetchVal fulfilled: ", message);
+        cleanClass(evalSession.htStructure.qCont.element, St.required);
         //fetching code
         for(let ques in actualTest.questions){
 
@@ -72,6 +73,10 @@ var evalSession = {
         fulfill(message);
       },function(message){
         console.log("fetchVal rejected: ", message);
+        cleanClass(evalSession.htStructure.qCont.element, St.required);
+        for(let el in message.elements){
+            message.elements[el].classList.add(St.required);          
+        }
         reject(message);
       });
     });
@@ -92,18 +97,19 @@ class Question {
     this.type = "";
     this.assess = function(session, question){
       let answers = session.testAnswers.answers;
-      console.log("assessing question: ", question);
+      //console.log("assessing question: ", question);
       if (this.type == "multiple") 
       {
-        for (let ans in answers) {
-          if (answers[ans].chosen == this.correct) 
-          {
-            return console.log("yeah right!");
-          }
-          else {
-            return console.log("WRONG");
-          }        
+        let result;
+        if (answers[question].chosen == this.correct) 
+        { 
+          result = question + ": \u2713";
         }
+        else {
+          result =  question + ": X";
+        }        
+        
+        return console.log(result);
       }
     }
   }
@@ -313,11 +319,26 @@ var form = {
         let accumulator = [];
         let elements = myForm.querySelectorAll("[required]");
         let radioGroup = {};
+        let currentName = "initial";
         //console.log("required elements: ", elements);
         for (let i = 0; i < elements.length; i++) {
+          //handle and check radio elements
             if(elements[i].type == "radio" /*agregar verificacion de name y agruparlos asi*/) {
-                radioGroup[i] = elements[i];
+              //build object with names and their elements group inside
+              if (currentName == "initial") {
+                radioGroup[elements[i].name] = {};                
+                radioGroup[elements[i].name][i] = elements[i];
+                currentName = elements[i].name;
+              } else if (currentName !== elements[i].name) {
+                radioGroup[elements[i].name] = {};                
+                radioGroup[elements[i].name][i] = elements[i];
+                currentName = elements[i].name;
+              } else {
+                radioGroup[currentName][i] = elements[i];
+                currentName = elements[i].name;
+              }
             }
+            //validates text inputs
             if (elements[i].value == "") {
                 returnObj.elements[i] = elements[i];
                 returnObj.text = "there is an input you have to fill with text,";
@@ -326,14 +347,21 @@ var form = {
             accumulator.push(true); 
           }
         }
-        if (form.anyRadio(radioGroup)) {
-          accumulator.push(true);
-        } else {
-          //enviar un objeto padre por ejemplo el edit options
-          returnObj.elements["radio"] = form.editOptions;
-          returnObj.text += " Which is the right answer?";
-          accumulator.push(false);
+        // another iteration within each name group to check if checked
+        for (let name in radioGroup) {
+          //call to anyRadio
+          if (form.anyRadio(radioGroup[name])) {
+              accumulator.push(true);
+          } else {
+           //enviar un objeto que abarque todos los radios, para el caso grandpa
+            let grandpa = myForm.querySelector('[name="'+ name +'"]').parentElement.parentElement;
+            //console.log("enviando: ", grandpa);
+            returnObj.elements["radio-" + name] = grandpa;
+            returnObj.text += " Select an option for: " + name;
+            accumulator.push(false);
+          }
         }
+
         //final check to resolve promise
         //console.log("accumulator: ", accumulator);
         if (accumulator.every((bool)=> bool)) 
@@ -477,11 +505,11 @@ var form = {
           form.editOptions.innerHTML = "";
       }
     },
-    anyRadio: function(elementsObj) {
-      /*crear iteracion por names y que  busque en any pero en cada uno de ellos*/
+    anyRadio: function(rGroup) {
+      /*gets object containing radios and check if any in that group is checked*/
       let any = false;
-      for (let optElements in elementsObj) {
-        if (elementsObj[optElements].checked) {
+      for (let radio in rGroup) {
+        if (rGroup[radio].checked) {
           any = true;
         }
       }
