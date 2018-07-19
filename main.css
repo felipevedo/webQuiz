@@ -1,35 +1,82 @@
 :root{
-  --main-color: #C8DC8A;
-  --light-main-color: #E3F3B4;
-  --dark-main-color: #ACC463;
-  --darkest-main-color: #8FA93C;
+  --main-color: #43617D;
 
-  --a-color: #D98997;
-  --light-a-color: #EFB2BD;
-  --dark-a-color: #C16172;
-  --darkest-a-color: #A73B4E;
+  --a-color: #5A8DAB;
 
-  --b-color: #82669C;
-  --light-b-color: #9983AC;
-  --dark-b-color: #6C4B8B;
-  --darkest-b-color: #563078;
+
+  --b-color: #43617D;
+  --c-color: #5A8DAB;
 }
 body {
   background-color: var(--main-color);
+  color: white;
+  font-weight: bold;
+  font-family: geneva;
+  font-size: 18;
 }
+ul {
+  list-style-type: none;
+}
+h1,h2 {
+  margin: 1em;
+}
+/*crear una clase para todos los campos de la app y no repetir esto*/
 .editor-field{
   box-sizing: border-box;
   padding: 1em;
-  margin: 2em 0;
-  background-color: var(--dark-main-color);
+  margin: 1em;
+  background-color: var(--c-color);
+  border: none;
+  border-radius: 5px;
 }
 .edit-answers{
   display: flex;
   flex-direction: column;
+}
+.question-container > fieldset {
+  background-color: var(--c-color);
+  border: none;
+  border-radius: 5px;
+  padding: 1em;
+  margin: 1em;
 }
 .answer-row{
   margin: 0.5em 0;
 }
 .required{
   border: 3px solid red;
+}
+.result-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1em;
+  background-color: var(--c-color);
+  padding: 1em;
+    border-radius: 5px;
+}
+.result-container > div {
+  flex: 1;
+  text-align: center;
+}
+.result-container > progress{
+    /* Reset the default appearance */
+  -webkit-appearance: none;
+   appearance: none;
+
+  width: 250px;
+  height: 20px;
+  background-color: white;
+}
+.result-container > progress::-webkit-progress-bar {
+  background-color: #eee;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+.percentage-text{
+  flex-direction: column;
+}
+.grade-text-cont{
+  display: flex;
+  justify-content: center;
 }

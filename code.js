@@ -1,19 +1,35 @@
-//##################### Fixes: ###################################
-// 2-El metodo assess() en Test o por cada pregunta
-// 3-El metodo checkAnyRadio tiene dificultades cuando no se le pasa exactamente
-// un objeto que conentga claves y sus valores sean elementos html
-// 6-que las funcionalidades de validacion sean de la propia pregunta
-//7- otra idea es crear una superClase donde esten todos los elementos que
-// yo necesite y desde esa ir llamandolos para que se creen segun otro objeto que yo
-//cree con la estructura deseada
-  // la otra opcion es algo parecido a lo que hago con genOpts pero mas escalable,
-  //############################################################################
-//Data modeling
-//crear mejor el objeto formulario y ahi guardar todos estos
-//elementos html relacionados y pasarlo por parametro en las funciones
-//se pasarian los metodos de evaluacion de requerimientos a este
-//1-el objeto deberia dar cuenta de su estructura html como genOpts
-//que lo hace por cada pregunta. Y actualizarse cada que se crea o elimina algo en el
+//don't know where to put this
+var assessed = {}
+function percentageResult(){
+  let stats = resultsStats(assessed);
+  console.log("total stats: ", stats.total);
+  //after the iterations calculate percentage
+  let rightPerc = (stats.rightCount/stats.total) * 100;
+  return rightPerc;
+}
+function resultsStats(results){
+  let stats = {
+    rightCount: 0,
+    wrongCount:0,
+    total: 0
+  }
+  for(let value in results) {
+    stats.total++;
+    if (results[value]) {
+      stats.rightCount++;
+    } else {
+      stats.wrongCount++
+    }
+  }
+  return stats;
+}
+function scaleResult(test){
+  let stats = resultsStats(assessed);
+  let result = (stats.rightCount*test.scaleRange.max)/stats.total;
+  return result;
+}
+//don't know where to put this
+
 var evalSession = {
   //donde se guardaran las respuestas a un examen.
   //debería haber una forma de relacionar la estructura
@@ -21,10 +37,9 @@ var evalSession = {
   structureModel: {
     head:{
       tag: "header",
-      title: 
-        {
-          tag: "h1",
-        }
+      title: {
+        tag: "h1",
+      }
     },
     qCont:{
       tag: "section",
@@ -35,6 +50,9 @@ var evalSession = {
       send: {
         tag: "button",
         id: "sendBtn",
+      },
+      results: {
+        tag:"button"
       }
     }
   },
@@ -44,12 +62,19 @@ var evalSession = {
     answers: {}
   },
   evaluate: function() {
+    return new Promise((fulfill,reject)=>{
+
       evalSession.fetchAnswers().then((message)=>{
+
         for(let ques in actualTest.questions){
-          actualTest.questions[ques].assess(evalSession,ques);
+          assessed[ques] = actualTest.questions[ques].assess(evalSession.testAnswers,ques);
         }
-      },
-      (message)=> console.log("evaluate says: ", message.text));  
+        console.log("objeto assessed ", assessed);
+        console.log(`in percentage: ${percentageResult(assessed)}%`);
+        console.log(`in scale: ${scaleResult(actualTest)}`);
+        fulfill();
+      }, (message) => reject(message));  
+    });
   },
   fetchAnswers: function(){
     return new Promise(function(fulfill,reject){
@@ -82,11 +107,74 @@ var evalSession = {
     });
   }
 }
+var resultsFrame = {
+  model:{
+    head:{
+      tag: "header",
+      title: {
+        tag: "h1",
+      }
+    },
+    percentage: {
+      tag: "div",
+      class: St.resultContainer+" "+St.percentage,
+      txt:{
+        tag: "p",
+      },
+      bar:{
+        tag: "progress",
+        max: "100",
+        vaue: "0",
+      }
+    },
+    grade: {
+      tag: "div",
+      class: St.resultContainer,
+      textCont: {
+        tag:"div",
+        class: St.gradeTxtCont,
+        txt:{
+          tag: "p",
+          detail:{
+          tag:"small",
+          }
+        },
+      },
+      number:{
+        tag:"div"
+      }
+    }
+  },
+  ht:{},
+  setResults: function() {
+    console.clear();
+    evalSession.evaluate().then(()=>{
+      let body = document.body;
+      body.innerHTML = "";
+      let htFrame = webQuiz.htFiller(resultsFrame.model);
+
+      htFrame.head.title.element.innerHTML = "Resultados";
+      htFrame.percentage.txt.element.innerHTML = `respondiste el ${Math.round(percentageResult(assessed)*100)/100}%
+       del examen correctamente`;
+      console.log("valor problematico: ", percentageResult(assessed))
+      htFrame.percentage.bar.element.value = Math.round(percentageResult(assessed));
+
+      htFrame.grade.textCont.txt.element.innerHTML = "Nota ";
+      htFrame.grade.textCont.txt.detail.element.innerHTML = `(Escala de ${actualTest.scaleRange.min} a ${actualTest.scaleRange.max})`;
+      htFrame.grade.number.element.innerHTML = Math.round(scaleResult(actualTest)*100)/100;
+
+      resultsFrame.ht = htFrame;
+      console.log("printed: ", resultsFrame.ht);
+      webQuiz.htPrinter(htFrame, body);
+    },(message)=> console.log("evaluate says: ", message.text));
+  }
+}
 class Test {
   constructor() {
     this.questionCount = 0;
     this.currentQuestion = 1;
     this.questions = {};
+    this.scaleRange = {min:0, max:5};
   }
 }
 class Question {
@@ -95,21 +183,24 @@ class Question {
     this.correct = 0;
     this.caption = "";
     this.type = "";
-    this.assess = function(session, question){
-      let answers = session.testAnswers.answers;
+    this.assess = function(answerObj, question){
+      let answers = answerObj.answers;
       //console.log("assessing question: ", question);
       if (this.type == "multiple") 
       {
         let result;
+        let graph;
         if (answers[question].chosen == this.correct) 
         { 
-          result = question + ": \u2713";
+          graph = question + ": \u2713";
+          result = true;
         }
         else {
-          result =  question + ": X";
+          graph =  question + ": X";
+          result = false;
         }        
-        
-        return console.log(result);
+        console.log(graph)
+        return result;
       }
     }
   }
@@ -244,8 +335,9 @@ var webQuiz = {
     body.innerHTML = "";
     //Set stuff for the main screen
     let evalScreen = webQuiz.htFiller(evalSession.structureModel);
-    evalScreen.head.title.element.innerHTML = "<h1>Examen creado</h1>";
-    evalScreen.btnCont.send.element.innerHTML = "Enviar";
+    evalScreen.head.title.element.innerHTML = "Examen creado";
+    evalScreen.btnCont.send.element.innerHTML = "Calificar";
+    evalScreen.btnCont.results.element.innerHTML = "Ver resultados";
 
 
     for (let ques in actualTest.questions) {
@@ -290,9 +382,10 @@ var webQuiz = {
 
     //update and print the whole new screen
     evalSession.htStructure = evalScreen;
-        console.log("printed: ", evalSession.htStructure);
+    console.log("printed: ", evalSession.htStructure);
     webQuiz.htPrinter(evalScreen, body);
-    webQuiz.binder(evalScreen.btnCont.send.element, "click",evalSession.evaluate);
+    webQuiz.binder(evalScreen.btnCont.send.element, "click", evalSession.evaluate);
+    webQuiz.binder(evalScreen.btnCont.results.element, "click", resultsFrame.setResults);
   },
   binder: function(element, ev, func){
     //takes an html element, the event as string and a function to bind to it
@@ -422,6 +515,7 @@ var form = {
       //llamada a la funcion guardar
       form.fetchQuestion().then(function(message){
         if (actualTest.questionCount > 0) {
+          actualTest.currentQuestion = 1;
           console.log("test finiquitado ",actualTest);
           webQuiz.setAnswers();
         } else {

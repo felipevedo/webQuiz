@@ -4,8 +4,11 @@ var St = {
 		"edit-answers": "edit-answers",
 		"answer-row" :"answer-row",
 		required: "required",
-        qContainer: "question-container"
-	};
+        qContainer: "question-container",
+        resultContainer: "result-container",
+        gradeTxtCont: "grade-text-cont",
+        percentage: "percentage-text"
+        };
 
 function generateDocument() {
 		var doc = "";
