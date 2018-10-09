@@ -7,16 +7,16 @@ var St = {
         qContainer: "question-container",
         resultContainer: "result-container",
         gradeTxtCont: "grade-text-cont",
-        percentage: "percentage-text"
+        percentage: "percentage-text",
         };
 
-function generateDocument() {
+/*function generateDocument() {
 		var doc = "";
 		for (let key in St) {
 			doc += "." + St[key] + " { }";
 		}
 		return doc;
-	}
+	}*/
 
 //takes element and a class to explore it and remove it
 function cleanClass(elGroup,cssClass)
