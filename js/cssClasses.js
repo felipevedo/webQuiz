@@ -3,6 +3,8 @@ var St = {
 		"editor-field": "editor-field",
 		"edit-answers": "edit-answers",
 		"answer-row" :"answer-row",
+		wrong: "wrong-answer",
+		correct: "correct-answer",
 		required: "required",
         qContainer: "question-container",
         resultContainer: "result-container",

@@ -9,7 +9,6 @@ var form = {
     structure:document.getElementById("form"),
     validateReq: function(myForm) {
       return new Promise(function(fulfill, reject) {
-        //falta agregar la condicion de que se haya creado al menos una pregunta
         let returnObj = {
           elements: {},
           text: "",
@@ -77,6 +76,7 @@ var form = {
         }
       });
     },
+    // listener
     nextQuestion: function(){
       //##################### Esta funcion debe: ###################################
       // - Guardar todos los datos relevantes de la pregunta que se acaba de crear
@@ -107,11 +107,13 @@ var form = {
           }
       }); 
     },
+    // listener
     selectedType: function() {
         //llama a set options y esta llama a los modelos pasando el tipo de opciones
         //que necesita crear y asimismo segun el tipo, las setea.
         form.setOptions(form.qType.value, Question.optionEditModel(form.qType.value));
     },
+    // listener
     finished: function(){
       //si no se guardo bien la pregunta, no deberia mostrar el examen.
       // actualizar finalmente los conteos
@@ -168,6 +170,7 @@ var form = {
           reject(message);
        });
 
+
       });   
     },
     setOptions: function(kind, model) {
@@ -177,7 +180,6 @@ var form = {
         form.editOptions.innerHTML = "";
 
         for (let i = 1; i <= form.optNumber.value; i++) {
-
           let fullModel = webQuiz.htFiller(model);
 
           fullModel.row.radio.element.setAttribute("value",`${i}`);
@@ -187,7 +189,6 @@ var form = {
           fullModel.row.label.element.innerHTML = i + ") ";
 
           genObj[i] = fullModel;
-
           webQuiz.htPrinter(genObj[i], form.editOptions);
         }
         form.genOpts = genObj;

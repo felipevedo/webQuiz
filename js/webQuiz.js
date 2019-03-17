@@ -55,7 +55,7 @@ var webQuiz = {
   showCD: function() {
     form.countDisplay.innerHTML = `Pregunta ${actualTest.currentQuestion}/${actualTest.questionCount}`;
   },
-  // este metodo deberia recibir el Test
+  // setup for answer screen
   setAnswers: function(){
     let body = document.body;
     body.innerHTML = "";

@@ -24,11 +24,13 @@ var evalSession = {
       }
     }
   },
+  assessed: {},
   htStructure: {},
   testAnswers: {
     testName: "",
     answers: {}
   },
+  // listener
   evaluate: function() {
     console.clear();
     return new Promise((fulfill,reject)=>{
@@ -37,22 +39,11 @@ var evalSession = {
 
         for(let ques in actualTest.questions){
           evalSession.assessed[ques] = actualTest.questions[ques].assess(evalSession.testAnswers,ques);
-          if (!evalSession.assessed[ques]) {
-            //codigo para capturar las preguntas equivocadas
-            //Se afectará con CSS al contenedor mayor de tipo Fieldset
-            //me pregunto si tengo que crear un nuevo objeto contenedor de estos y que en el mismo, se
-            //puedan guardar tanto correctos como incorrectos.
-
-            //esta linea devuelve el elemento que esta incorrecto
-            console.log("something wrong here! ", evalSession.htStructure.qCont[ques].element);
-            //segunda idea: no creo mas objetos ni nada, simplemente hago una iteracion que compare
-            //el objeto evalsession.assessed[elmismo] con el htStructure.qCont[elmismo].element y si es correcto, 
-            //le ponga una clase, y si no, otra ... classList.add(St.required);
-          }
         }
         console.log("objeto assessed ", evalSession.assessed);
         console.log(`in percentage: ${evalSession.percentageResult(evalSession.assessed)}%`);
         console.log(`in scale: ${evalSession.scaleResult(actualTest)}`);
+        evalSession.showAnswersPreview();
         fulfill();
       }, (message) => reject(message));  
     });
@@ -89,7 +80,7 @@ var evalSession = {
       });
     });
   },
-  assessed: {},
+  // TODO: habria que migrar esto al modulo results Frame
   percentageResult: function(){
   		let stats = evalSession.resultsStats(evalSession.assessed);
   		console.log("total stats: ", stats.total);
@@ -117,5 +108,26 @@ var evalSession = {
 	  let stats = evalSession.resultsStats(evalSession.assessed);
 	  let result = (stats.rightCount*test.scaleRange.max)/stats.total;
 	  return result;
-	}
+  },
+  showAnswersPreview: function() {
+    // take questions
+    let htQuestionContainer = evalSession.htStructure.qCont;
+    console.log('each question of ', htQuestionContainer);
+    console.log('type of container ', typeof htQuestionContainer);
+    for (let question in htQuestionContainer) {
+      let questionObj = htQuestionContainer[question];
+      if (question !== 'element') {
+        console.log('each question of ', questionObj);
+        if (evalSession.assessed[question]) {
+          questionObj.element.classList.add(St.correct);
+        } else {
+          questionObj.element.classList.add(St.wrong);
+        }        
+      }
+    }
+    // get evaluation results
+    // update state of each question
+    // change css classes to show right or worng
+
+  }
 }

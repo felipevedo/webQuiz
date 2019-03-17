@@ -37,6 +37,7 @@ var resultsFrame = {
     }
   },
   ht:{},
+  // listener, starts setup of results screen
   setResults: function() {
     console.clear();
     evalSession.evaluate().then(()=>{

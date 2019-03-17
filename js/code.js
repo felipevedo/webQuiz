@@ -12,23 +12,24 @@ class Question {
     this.correct = 0;
     this.caption = "";
     this.type = "";
-    this.assess = function(answerObj, question){
-      let answers = answerObj.answers;
-      //console.log("assessing question: ", question);
-      if (this.type == "multiple") 
+  }
+  assess (answerObj, question) {
+    let answers = answerObj.answers;
+    //console.log("assessing question: ", question);
+    if (this.type == "multiple")
+    {
+      let result;
+      if (answers[question].chosen == this.correct)
       {
-        let result;
-        if (answers[question].chosen == this.correct) 
-        { 
-          result = true;
-        }
-        else {
-          result = false;
-        }        
-        return result;
+        result = true;
       }
+      else {
+        result = false;
+      }
+      return result;
     }
   }
+
   static optionEditModel(type) {
     //console.log("tipo de pregunta: ", type);
     let multiple = {
@@ -91,7 +92,7 @@ class Question {
     //console.log("tipo de rta: ", type);
 
     if (type == "multiple" && query == undefined) {
-      return multiple.model; 
+      return multiple.model;
     } else if (type == "multiple" && query == "option") {
       return multiple.option;
     }
@@ -101,8 +102,8 @@ let actualTest = new Test;
 //Show initial question count
 webQuiz.showCD();
 
-//add listeners
-form.qType.addEventListener("change", form.selectedType);
-form.optNumber.addEventListener("change", form.selectedType);
-form.nextBtn.addEventListener("click", form.nextQuestion);
-form.finBtn.addEventListener("click", form.finished);
+//add event listeners
+webQuiz.binder(form.qType, 'change', form.selectedType);
+webQuiz.binder(form.optNumber, 'change', form.selectedType);
+webQuiz.binder(form.nextBtn, 'click', form.nextQuestion);
+webQuiz.binder(form.finBtn, 'click', form.finished);

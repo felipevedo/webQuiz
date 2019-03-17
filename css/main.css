@@ -80,3 +80,10 @@ h1,h2 {
   display: flex;
   justify-content: center;
 }
+/* feedback classes */
+.correct-answer {
+  background-color: #00FF00 !important;
+}
+.wrong-answer {
+  background-color: #FF0000 !important;
+}
